@@ -1,37 +1,42 @@
 {
   "name": "roadquest-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "RoadQuest API - Backend Node.js + PostgreSQL + PostGIS",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "jest"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "roadquest",
+    "gps",
+    "motorcycle",
+    "tracking"
+  ],
+  "author": "CDA Niveau 6",
+  "license": "MIT",
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.2.4",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "pg": "^8.18.0",
-    "pg-hstore": "^2.3.4",
-    "redis": "^5.10.0",
-    "sequelize": "^6.37.7",
-    "socket.io": "^4.8.3"
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "socket.io": "^4.6.2",
+    "redis": "^4.6.10",
+    "ioredis": "^5.3.2"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^25.2.3",
-    "nodemon": "^3.1.11",
+    "typescript": "^5.3.3",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@types/cors": "^2.8.17",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/pg": "^8.10.9",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "nodemon": "^3.0.2"
   }
 }

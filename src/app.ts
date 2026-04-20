@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/user";
+import ridesRoutes from "./routes/rides";
+import poisRoutes from "./routes/pois";
 
 dotenv.config();
 
@@ -23,7 +25,9 @@ app.get("/health", (req: Request, res: Response) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes); // ← Nouvelle route
+app.use("/api/user", userRoutes);
+app.use("/api/rides", ridesRoutes);
+app.use("/api/pois", poisRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

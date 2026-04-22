@@ -10,7 +10,19 @@ export interface User {
   level: number;
   total_distance: number;
   total_rides: number;
+  motorcycle_brand?: string;
+  motorcycle_model?: string;
+  motorcycle_year?: number;
+  motorcycle_photo_url?: string;
   created_at: Date;
+}
+
+export interface UserStatistics {
+  total_trips: number;
+  total_distance: number;
+  pois_discovered: number;
+  achievements_unlocked: number;
+  regions_explored: number;
 }
 
 export const createUser = async (
@@ -39,13 +51,54 @@ export const findUserByEmail = async (email: string): Promise<any | null> => {
 
 export const findUserById = async (userId: string): Promise<User | null> => {
   const query = `
-    SELECT user_id, email, username, avatar_url, xp, level, 
-           total_distance, total_rides, created_at
-    FROM users 
+    SELECT user_id, email, username, avatar_url, xp, level,
+           total_distance, total_rides, created_at,
+           motorcycle_brand, motorcycle_model, motorcycle_year, motorcycle_photo_url
+    FROM users
     WHERE user_id = $1
   `;
   const result = await pool.query(query, [userId]);
   return result.rows[0] || null;
+};
+
+export const getUserStatistics = async (userId: string): Promise<UserStatistics | null> => {
+  const query = `
+    SELECT
+      COALESCE(COUNT(DISTINCT r.ride_id), 0)::int as total_trips,
+      COALESCE(ROUND(SUM(r.distance_km)::numeric, 2), 0)::float as total_distance,
+      COALESCE(COUNT(DISTINCT vp.poi_id), 0)::int as pois_discovered,
+      COALESCE(COUNT(DISTINCT ua.achievement_id) FILTER (WHERE ua.unlocked_at IS NOT NULL), 0)::int as achievements_unlocked,
+      0::int as regions_explored
+    FROM users u
+    LEFT JOIN rides r ON u.user_id = r.user_id
+    LEFT JOIN visited_pois vp ON u.user_id = vp.user_id
+    LEFT JOIN user_achievements ua ON u.user_id = ua.user_id
+    WHERE u.user_id = $1
+    GROUP BY u.user_id
+  `;
+  const result = await pool.query(query, [userId]);
+  return result.rows[0] || null;
+};
+
+export const updateUserMotorcycle = async (
+  userId: string,
+  brand: string,
+  model: string,
+  year: number,
+  photoUrl?: string
+): Promise<boolean> => {
+  const query = `
+    UPDATE users
+    SET
+      motorcycle_brand = $2,
+      motorcycle_model = $3,
+      motorcycle_year = $4,
+      motorcycle_photo_url = $5,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE user_id = $1
+  `;
+  const result = await pool.query(query, [userId, brand, model, year, photoUrl]);
+  return result.rowCount ? result.rowCount > 0 : false;
 };
 
 export const verifyPassword = async (

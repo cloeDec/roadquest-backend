@@ -1,6 +1,8 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger";
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/user";
 import ridesRoutes from "./routes/rides";
@@ -14,7 +16,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.get("/health", (req: Request, res: Response) => {
   res.json({
     status: "OK",
@@ -23,7 +26,6 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
-// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/rides", ridesRoutes);

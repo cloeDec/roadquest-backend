@@ -190,13 +190,22 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Find user
+  // Find user
     const user = await findUserByEmail(email);
     if (!user) {
-      // On enregistre la tentative par email ET par IP
-      recordFailedAttempt(email);
+      const remainingAttempts = recordFailedAttempt(email);
       recordFailedIpAttempt(clientIp);
-      return res.status(401).json({ error: 'Invalid credentials' });
+
+      if (remainingAttempts <= 0) {
+        return res.status(429).json({
+          error: `Compte bloqué pendant 15 minutes suite à trop de tentatives échouées.`
+        });
+      }
+
+      return res.status(401).json({
+        error: 'Invalid credentials',
+        remainingAttempts: remainingAttempts > 0 ? remainingAttempts : 0
+      });
     }
 
     // Verify password

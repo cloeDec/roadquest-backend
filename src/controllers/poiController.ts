@@ -6,6 +6,7 @@ import {
   getVisitedPOIs,
   createPOI
 } from '../models/queries/pois';
+import { checkAndUnlockAchievements } from '../models/queries/achievements';
 
 /**
  * Récupérer tous les POIs
@@ -89,10 +90,22 @@ export const markPOIAsVisitedHandler = async (req: Request, res: Response) => {
       });
     }
 
+    // NOUVEAU : l'XP du POI est désormais créditée côté serveur par le
+    // trigger trigger_award_poi_visit_xp (migration 007), déclenché par
+    // l'insertion dans ride_poi qui vient d'avoir lieu dans markPOIAsVisited.
+    // On vérifie ici si cette visite débloque en plus un achievement.
+    let unlockedAchievements: Awaited<ReturnType<typeof checkAndUnlockAchievements>> = [];
+    try {
+      unlockedAchievements = await checkAndUnlockAchievements(userId);
+    } catch (achievementError) {
+      console.error('Erreur lors de la vérification des achievements:', achievementError);
+    }
+
     res.status(200).json({
       message: 'POI marqué comme visité avec succès',
       poi_id: poiId,
-      ride_id: rideId
+      ride_id: rideId,
+      unlocked_achievements: unlockedAchievements
     });
   } catch (error) {
     console.error('Erreur lors du marquage du POI:', error);

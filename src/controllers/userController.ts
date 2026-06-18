@@ -31,6 +31,9 @@ export const getProfile = async (req: Request, res: Response) => {
         total_distance: stats?.total_distance || 0,
         total_trips: stats?.total_trips || 0,
         regions_explored: stats?.regions_explored || 0,
+        // NOUVEAU : auparavant absent d'ici, ce qui forçait le mobile à
+        // figer cette valeur à 12 pour tout utilisateur connecté.
+        pois_discovered: stats?.pois_discovered || 0,
         created_at: user.created_at,
       },
     });

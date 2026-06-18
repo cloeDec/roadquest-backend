@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { createRide, getRidesByUserId, getRideById, deleteRide, CreateRideData } from '../models/queries/rides';
+import { checkAndUnlockAchievements } from '../models/queries/achievements';
 
 /**
  * Créer un nouveau trajet
@@ -56,9 +57,21 @@ export const createRideHandler = async (req: Request, res: Response) => {
 
     const ride = await createRide(rideData);
 
+    // NOUVEAU : vérifie si ce trajet débloque un ou plusieurs achievements
+    // (distance/nombre de sorties cumulés). Le calcul de l'XP de distance
+    // reste géré par le trigger PL/pgSQL ; ceci ne gère que les achievements.
+    let unlockedAchievements: Awaited<ReturnType<typeof checkAndUnlockAchievements>> = [];
+    try {
+      unlockedAchievements = await checkAndUnlockAchievements(userId);
+    } catch (achievementError) {
+      // Un échec de cette vérification ne doit jamais faire échouer la création du trajet
+      console.error('Erreur lors de la vérification des achievements:', achievementError);
+    }
+
     res.status(201).json({
       message: 'Trajet créé avec succès',
-      ride
+      ride,
+      unlocked_achievements: unlockedAchievements
     });
   } catch (error) {
     console.error('Erreur lors de la création du trajet:', error);

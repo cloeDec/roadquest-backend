@@ -49,7 +49,13 @@ export interface CreateRideData {
 }
 
 /**
- * Créer un nouveau trajet
+ * Créer un nouveau trajet.
+ *
+ * La requête est construite de façon incrémentale : chaque valeur ajoutée
+ * reçoit le placeholder $1, $2, ... dans l'ordre, ce qui évite toute
+ * concaténation de données utilisateur dans le SQL (protection contre les
+ * injections). Les champs géographiques optionnels (end_location, route)
+ * ne sont inclus que s'ils sont fournis.
  */
 export const createRide = async (data: CreateRideData): Promise<Ride> => {
   const {
@@ -65,64 +71,52 @@ export const createRide = async (data: CreateRideData): Promise<Ride> => {
     is_public = true
   } = data;
 
-  // Convertir les coordonnées en format PostGIS LineString
-  const routeLineString = route.length > 0
-    ? `LINESTRING(${route.map(coord => `${coord.longitude} ${coord.latitude}`).join(', ')})`
-    : null;
+  const params: any[] = [];
+  const add = (value: any): string => {
+    params.push(value);
+    return `$${params.length}`; // renvoie le placeholder correspondant
+  };
+
+  // start_location (obligatoire) : ST_MakePoint attend (longitude, latitude)
+  const startSql = `ST_SetSRID(ST_MakePoint(${add(start_location.longitude)}, ${add(start_location.latitude)}), 4326)::geography`;
+
+  // end_location (optionnel)
+  const endSql = end_location
+    ? `ST_SetSRID(ST_MakePoint(${add(end_location.longitude)}, ${add(end_location.latitude)}), 4326)::geography`
+    : 'NULL';
+
+  // route (optionnel) : on construit une chaîne LINESTRING passée en paramètre
+  let routeSql = 'NULL';
+  if (route.length > 0) {
+    const lineString = `LINESTRING(${route.map(c => `${c.longitude} ${c.latitude}`).join(', ')})`;
+    routeSql = `ST_GeomFromText(${add(lineString)}, 4326)::geography`;
+  }
 
   const query = `
     INSERT INTO rides (
-      user_id,
-      start_location,
-      end_location,
-      route,
-      distance,
-      duration,
-      avg_speed,
-      max_speed,
-      is_public
+      user_id, start_location, end_location, route,
+      distance, duration, avg_speed, max_speed, is_public
     )
     VALUES (
-      $1,
-      ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
-      ${end_location ? 'ST_SetSRID(ST_MakePoint($4, $5), 4326)::geography' : 'NULL'},
-      ${routeLineString ? `ST_GeomFromText($${end_location ? 6 : 4}, 4326)::geography` : 'NULL'},
-      $${end_location ? (routeLineString ? 7 : 6) : (routeLineString ? 5 : 4)},
-      $${end_location ? (routeLineString ? 8 : 7) : (routeLineString ? 6 : 5)},
-      $${end_location ? (routeLineString ? 9 : 8) : (routeLineString ? 7 : 6)},
-      $${end_location ? (routeLineString ? 10 : 9) : (routeLineString ? 8 : 7)},
-      $${end_location ? (routeLineString ? 11 : 10) : (routeLineString ? 9 : 8)}
+      ${add(user_id)},
+      ${startSql},
+      ${endSql},
+      ${routeSql},
+      ${add(distance)},
+      ${add(duration)},
+      ${add(avg_speed ?? null)},
+      ${add(max_speed ?? null)},
+      ${add(is_public)}
     )
     RETURNING
       ride_id,
       user_id,
       ST_Y(start_location::geometry) as start_lat,
       ST_X(start_location::geometry) as start_lng,
-      ${end_location ? 'ST_Y(end_location::geometry) as end_lat, ST_X(end_location::geometry) as end_lng,' : ''}
-      distance,
-      duration,
-      avg_speed,
-      max_speed,
-      xp_earned,
-      is_public,
-      created_at
+      ST_Y(end_location::geometry)   as end_lat,
+      ST_X(end_location::geometry)   as end_lng,
+      distance, duration, avg_speed, max_speed, xp_earned, is_public, created_at
   `;
-
-  const params: any[] = [
-    user_id,
-    start_location.longitude,
-    start_location.latitude
-  ];
-
-  if (end_location) {
-    params.push(end_location.longitude, end_location.latitude);
-  }
-
-  if (routeLineString) {
-    params.push(routeLineString);
-  }
-
-  params.push(distance, duration, avg_speed || null, max_speed || null, is_public);
 
   const result = await pool.query(query, params);
   const row = result.rows[0];

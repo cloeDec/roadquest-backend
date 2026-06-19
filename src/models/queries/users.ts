@@ -35,7 +35,7 @@ export const createUser = async (
   const query = `
     INSERT INTO users (email, password, username)
     VALUES ($1, $2, $3)
-    RETURNING user_id, email, username, avatar_url, xp, level, 
+    RETURNING user_id, email, username, avatar_url, xp, level,
               total_distance, total_rides, created_at
   `;
 
@@ -62,17 +62,28 @@ export const findUserById = async (userId: string): Promise<User | null> => {
 };
 
 export const getUserStatistics = async (userId: string): Promise<UserStatistics | null> => {
+  // Note : on s'appuie sur les colonnes réelles du schéma (rides.distance,
+  // table ride_poi) et non sur distance_km / visited_pois qui n'existent pas.
+  // Les POI visités se comptent en remontant ride_poi -> rides (l'utilisateur
+  // propriétaire du trajet), car ride_poi n'a pas de colonne user_id directe.
   const query = `
     SELECT
       COALESCE(COUNT(DISTINCT r.ride_id), 0)::int as total_trips,
-      COALESCE(ROUND(SUM(r.distance_km)::numeric, 2), 0)::float as total_distance,
-      COALESCE(COUNT(DISTINCT vp.poi_id), 0)::int as pois_discovered,
-      COALESCE(COUNT(DISTINCT ua.achievement_id) FILTER (WHERE ua.unlocked_at IS NOT NULL), 0)::int as achievements_unlocked,
+      COALESCE(ROUND(SUM(r.distance)::numeric, 2), 0)::float as total_distance,
+      COALESCE((
+        SELECT COUNT(DISTINCT rp.poi_id)
+        FROM ride_poi rp
+        INNER JOIN rides r2 ON rp.ride_id = r2.ride_id
+        WHERE r2.user_id = $1
+      ), 0)::int as pois_discovered,
+      COALESCE((
+        SELECT COUNT(*)
+        FROM user_achievements ua
+        WHERE ua.user_id = $1 AND ua.unlocked_at IS NOT NULL
+      ), 0)::int as achievements_unlocked,
       0::int as regions_explored
     FROM users u
     LEFT JOIN rides r ON u.user_id = r.user_id
-    LEFT JOIN visited_pois vp ON u.user_id = vp.user_id
-    LEFT JOIN user_achievements ua ON u.user_id = ua.user_id
     WHERE u.user_id = $1
     GROUP BY u.user_id
   `;

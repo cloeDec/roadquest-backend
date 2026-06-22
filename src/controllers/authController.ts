@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { createUser, findUserByEmail, verifyPassword } from "../models/queries/users";
 import { generateToken } from "../utils/jwt";
+import { revokeToken } from "../utils/tokenBlacklist";
 
 const loginAttempts: Map<string, { attempts: number; lockUntil: number }> = new Map();
 const ipAttempts: Map<string, { attempts: number; lockUntil: number }> = new Map();
@@ -203,6 +204,21 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Login error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const logout = (req: Request, res: Response) => {
+  try {
+    const token = req.token;
+
+    if (token) {
+      revokeToken(token);
+    }
+
+    res.json({ message: "Logout successful" });
+  } catch (error) {
+    console.error("Logout error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

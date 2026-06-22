@@ -505,7 +505,13 @@ INSERT INTO rides (ride_id, user_id, start_location, end_location, route, durati
  ST_SetSRID(ST_MakePoint(3.0586, 50.6292), 4326),   -- Lille
  ST_SetSRID(ST_MakePoint(2.7775, 50.2910), 4326),   -- Arras
  ST_SetSRID(ST_GeomFromText('LINESTRING(3.0586 50.6292, 2.95 50.5, 2.7775 50.2910)'), 4326),
- 3600, 65.0, 110.0);
+ 3600, 65.0, 110.0),
+-- Trajet Lille → Dunkerque (Nord de la France, ~80 km via la côte)
+('c0000003-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111',
+ ST_SetSRID(ST_MakePoint(3.0586, 50.6292), 4326),   -- Lille (départ)
+ ST_SetSRID(ST_MakePoint(2.3767, 51.0343), 4326),   -- Dunkerque (arrivée)
+ ST_SetSRID(ST_GeomFromText('LINESTRING(3.0586 50.6292, 2.8891 50.7262, 2.7356 50.7984, 2.5293 50.8529, 2.4283 50.9509, 2.3767 51.0343)'), 4326),
+ 4800, 72.0, 115.0);
 
 -- 5.6 POI visités pendant le 1er trajet (déclenche l'attribution d'XP)
 INSERT INTO ride_poi (ride_id, poi_id) VALUES

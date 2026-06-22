@@ -8,7 +8,6 @@ import userRoutes from "./routes/user";
 import ridesRoutes from "./routes/rides";
 import poisRoutes from "./routes/pois";
 import achievementsRoutes from "./routes/achievements";
-import socialRoutes from "./routes/social";
 
 dotenv.config();
 
@@ -33,7 +32,6 @@ app.use("/api/user", userRoutes);
 app.use("/api/rides", ridesRoutes);
 app.use("/api/pois", poisRoutes);
 app.use("/api/achievements", achievementsRoutes);
-app.use("/api/social", socialRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

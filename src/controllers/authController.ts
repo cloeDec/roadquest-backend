@@ -121,10 +121,23 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, username } = req.body;
 
-    // Validation
+    // Validation des champs obligatoires
     if (!email || !password || !username) {
-      return res.status(400).json({ 
-        error: 'Email, password and username are required' 
+      return res.status(400).json({
+        error: 'Email, password and username are required'
+      });
+    }
+
+    // Validation du format d'email (regex simple mais suffisante)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Validation de la robustesse minimale du mot de passe
+    if (password.length < 8) {
+      return res.status(400).json({
+        error: 'Password must be at least 8 characters long'
       });
     }
 

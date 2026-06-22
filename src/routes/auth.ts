@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { register, login } from '../controllers/authController';
+import { register, login, logout } from '../controllers/authController';
+import { authenticate } from '../middlewares/auth';
 
 const router = Router();
 
@@ -90,5 +91,21 @@ router.post('/register', register);
  *         description: Identifiants incorrects
  */
 router.post('/login', login);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Déconnexion de l'utilisateur
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Déconnexion réussie
+ *       401:
+ *         description: Non authentifié
+ */
+router.post('/logout', authenticate, logout);
 
 export default router;

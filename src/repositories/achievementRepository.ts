@@ -2,14 +2,12 @@ import { pool } from '../config/database';
 
 export interface AchievementRow {
   achievement_id: string;
-  achievement_key: string;
   name: string;
   description: string;
   xp_reward: number;
-  badge_icon: string;
-  category: string;
-  requirement_type: string;
-  requirement_value: number;
+  icon_url: string;
+  condition_type: string;
+  condition_value: number;
   rarity: string;
 }
 
@@ -23,14 +21,12 @@ export const getAllAchievements = async (): Promise<AchievementRow[]> => {
   const query = `
     SELECT
       achievement_id,
-      achievement_id::text as achievement_key,
       name,
       description,
       xp_reward,
-      icon_url as badge_icon,
-      'general' as category,
-      condition_type as requirement_type,
-      condition_value as requirement_value,
+      icon_url,
+      condition_type,
+      condition_value,
       rarity
     FROM achievements
     ORDER BY
@@ -64,14 +60,12 @@ export const getUserAchievementsWithProgress = async (
     )
     SELECT
       a.achievement_id,
-      a.achievement_id::text as achievement_key,
       a.name,
       a.description,
       a.xp_reward,
-      a.icon_url as badge_icon,
-      'general' as category,
-      a.condition_type as requirement_type,
-      a.condition_value as requirement_value,
+      a.icon_url,
+      a.condition_type,
+      a.condition_value,
       a.rarity,
       ua.unlocked_at,
       CASE
@@ -132,14 +126,12 @@ export const checkAndUnlockAchievements = async (
     )
     SELECT
       a.achievement_id,
-      a.achievement_id::text as achievement_key,
       a.name,
       a.description,
       a.xp_reward,
-      a.icon_url as badge_icon,
-      'general' as category,
-      a.condition_type as requirement_type,
-      a.condition_value as requirement_value,
+      a.icon_url,
+      a.condition_type,
+      a.condition_value,
       a.rarity
     FROM achievements a
     INNER JOIN inserted i ON i.achievement_id = a.achievement_id

@@ -62,10 +62,6 @@ export const findUserById = async (userId: string): Promise<User | null> => {
 };
 
 export const getUserStatistics = async (userId: string): Promise<UserStatistics | null> => {
-  // Note : on s'appuie sur les colonnes réelles du schéma (rides.distance,
-  // table ride_poi) et non sur distance_km / visited_pois qui n'existent pas.
-  // Les POI visités se comptent en remontant ride_poi -> rides (l'utilisateur
-  // propriétaire du trajet), car ride_poi n'a pas de colonne user_id directe.
   const query = `
     SELECT
       COALESCE(COUNT(DISTINCT r.ride_id), 0)::int as total_trips,

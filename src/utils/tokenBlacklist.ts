@@ -4,7 +4,7 @@ const blacklist: Map<string, number> = new Map();
 
 const CLEANUP_INTERVAL = 60 * 60 * 1000;
 
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [token, expiresAt] of blacklist.entries()) {
     if (expiresAt < now) {
@@ -12,6 +12,16 @@ setInterval(() => {
     }
   }
 }, CLEANUP_INTERVAL);
+
+// Permet d'arrêter l'intervalle pour les tests
+export const stopCleanupInterval = (): void => {
+  clearInterval(cleanupInterval);
+};
+
+// Pour les tests : vider la blacklist
+export const clearBlacklist = (): void => {
+  blacklist.clear();
+};
 
 export const revokeToken = (token: string): void => {
   const decoded = jwt.decode(token) as { exp?: number } | null;
